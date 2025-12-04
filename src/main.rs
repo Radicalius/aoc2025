@@ -1,9 +1,10 @@
 use std::{env, fs};
 
-trait Solution {
-    fn part1(&self, input: &str) -> i64;
-    fn part2(&self, input: &str) -> i64;
-}
+mod solution;
+use solution::Solution;
+
+mod day2;
+use day2::Day2Solution;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -21,7 +22,8 @@ fn main() {
     assert!(day > 0 && day < 25, "day must be in [1, 25]");
 
     let solutions: Vec<Box<dyn Solution>> = vec![
-
+        Box::from(Day2Solution{}),
+        Box::from(Day2Solution{})
     ];
 
     let filename = String::from("inputs/")+dayStr+".txt";
