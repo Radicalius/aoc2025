@@ -6,9 +6,7 @@ struct IdRange {
   end: i64
 }
 
-pub struct Day2Solution{
-
-}
+pub struct Day2Solution{}
 
 impl Day2Solution {
   fn parse(&self, input: &str) -> Vec<IdRange> {
@@ -27,30 +25,58 @@ impl Day2Solution {
     return result;
   }
 
-  fn is_invalid(&self, num: i64) -> bool {
-    let digits = (num as f64).log10().ceil() as u32;
+  fn count_digits(&self, num: i64) -> u32 {
+    return num.ilog10() + 1;
+  }
+
+  fn get_chunk(&self, num: i64, size: u32, offset: u32) -> i64 {
+    return (num / 10_i64.pow(size * offset)) % 10_i64.pow(size)
+  }
+
+  fn is_invalid_part1(&self, num: i64) -> bool {
+    let digits = self.count_digits(num);
 
     if digits % 2 != 0 || digits == 0 {
       return false;
     }
 
-    let half_exp = 10_i64.pow(digits / 2);
-    let upper = num / half_exp;
-    let lower = num % half_exp;
+    let lower = self.get_chunk(num, digits / 2, 0);
+    let upper = self.get_chunk(num, digits / 2, 1);
 
     return upper == lower;
   }
-}
 
-impl Solution for Day2Solution  {
-  fn part1(&self, input: &str) -> i64 {
-    let data = self.parse(input);
+  fn is_invalid_part2(&self, num: i64) -> bool {
+    let digits = self.count_digits(num);
+    
+    for size in 1..(digits / 2 + 1) {
+      if digits % size != 0 {
+        continue;
+      }
 
+      let first = self.get_chunk(num, size, 0);
+      let mut invalid = true;
+      for offset in 1..(digits / size) {
+        if self.get_chunk(num, size, offset) != first {
+          invalid = false;
+          break;
+        }
+      }
+
+      if invalid {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  fn sum_invalid<InvalidChecker>(&self, data: Vec<IdRange>, is_invalid: InvalidChecker) -> i64 where InvalidChecker: Fn(i64) -> bool {
     let mut res: i64 = 0;
 
     for range in data {
       for i in range.start..(range.end+1) {
-        if self.is_invalid(i) {
+        if is_invalid(i) {
           res += i;
         }
       }
@@ -58,8 +84,16 @@ impl Solution for Day2Solution  {
 
     return res;
   }
+}
+
+impl Solution for Day2Solution  {
+  fn part1(&self, input: &str) -> i64 {
+    let data = self.parse(input);
+    return self.sum_invalid(data, |data| self.is_invalid_part1(data));
+  }
 
   fn part2(&self, input: &str) -> i64 {
-    return 0;
+    let data = self.parse(input);
+    return self.sum_invalid(data, |data| self.is_invalid_part2(data));
   }
 }
