@@ -12,6 +12,9 @@ use day2::Day2Solution;
 mod day3;
 use day3::Day3Solution;
 
+mod day4;
+use day4::Day4Solution;
+
 fn main() {
     let args = env::args().collect::<Vec<String>>();
     
@@ -30,7 +33,8 @@ fn main() {
     let solutions: Vec<Box<dyn Solution>> = vec![
         Box::from(Day1Solution{}),
         Box::from(Day2Solution{}),
-        Box::from(Day3Solution{})
+        Box::from(Day3Solution{}),
+        Box::from(Day4Solution{})
     ];
 
     let solution: &Box<dyn Solution>  = match solutions.get(day - 1) {
