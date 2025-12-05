@@ -29,7 +29,7 @@ impl Day3Solution {
     return res;
   }
 
-  fn find_max_joltage_2_battery(&self, bank: &[i64]) -> i64 {
+  fn find_max_joltage_2_battery(&self, bank: &[i64], cache: &mut HashMap<(usize, usize), i64>) -> i64 {
     let mut cur_max = 0;
     let mut best_bat = 0;
 
@@ -48,10 +48,10 @@ impl Day3Solution {
   }
 
   fn find_max_joltage_n_batteries(&self, bank: &[i64], n: usize, cache: &mut HashMap<(usize, usize), i64>) -> i64 {
-    // let cache_key = (bank.len(), n);
-    // if cache.contains_key(&cache_key) {
-    //   return *cache.get(&cache_key).unwrap();
-    // }
+    let cache_key = (bank.len(), n);
+    if cache.contains_key(&cache_key) {
+      return *cache.get(&cache_key).unwrap();
+    }
     
     if n == 0 {
       return 0;
@@ -69,19 +69,20 @@ impl Day3Solution {
     let not_use_first = self.find_max_joltage_n_batteries(&bank[1..], n, cache);
 
     if use_first > not_use_first {
-      //cache.insert(cache_key, use_first);
+      cache.insert(cache_key, use_first);
       return use_first;
     }
 
-    //cache.insert(cache_key, not_use_first);
+    cache.insert(cache_key, not_use_first);
     return not_use_first;
   }
 
   fn sum_joltage<JoltageFinder>(&self, inp: Vec<Vec<i64>>, mut find_joltage: JoltageFinder) -> i64 
-  where JoltageFinder: FnMut(&[i64]) -> i64 {
+  where JoltageFinder: FnMut(&[i64], &mut HashMap<(usize, usize), i64>) -> i64 {
     let mut joltage = 0;    
     for bank in inp {
-      joltage += find_joltage(&bank)
+      let mut cache: HashMap<(usize, usize), i64> = HashMap::new();
+      joltage += find_joltage(&bank, &mut cache)
     }
 
     return joltage;
@@ -93,13 +94,12 @@ impl Solution for Day3Solution {
   fn part1(&self, input: &str) -> i64 {
     return self.sum_joltage(
       self.parse(input),
-      |bank| self.find_max_joltage_2_battery(bank))
+      |bank, cache| self.find_max_joltage_2_battery(bank, cache))
   }
 
   fn part2(&self, input: &str) -> i64 {
-    let mut cache: HashMap<(usize, usize), i64> = HashMap::new();
     return self.sum_joltage(
       self.parse(input),
-      |bank| self.find_max_joltage_n_batteries(bank, 12, &mut cache))
+      |bank, cache| self.find_max_joltage_n_batteries(bank, 12, cache))
   }
 }
