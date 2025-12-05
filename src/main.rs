@@ -3,6 +3,9 @@ use std::{env, fs};
 mod solution;
 use solution::Solution;
 
+mod day1;
+use day1::Day1Solution;
+
 mod day2;
 use day2::Day2Solution;
 
@@ -25,7 +28,7 @@ fn main() {
     assert!(day > 0 && day < 25, "day must be in [1, 25]");
 
     let solutions: Vec<Box<dyn Solution>> = vec![
-        Box::from(Day2Solution{}),
+        Box::from(Day1Solution{}),
         Box::from(Day2Solution{}),
         Box::from(Day3Solution{})
     ];
