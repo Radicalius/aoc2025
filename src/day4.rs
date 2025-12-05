@@ -54,6 +54,30 @@ impl Grid {
 
     return self.data[0].len();
   }
+
+  fn is_available(&self, x: usize, y: usize) -> bool {
+    if self.get(x, y) == TileType::ROLL {
+      let mut adjacent = 0;
+      for i in -1_i64..2 {
+        for j in -1_i64..2 {
+          let tile_type = self.get((x as i64 + i) as usize,(y as i64 + j) as usize);
+          if !(i == 0 && j == 0) && tile_type == TileType::ROLL {
+            adjacent += 1;
+          }
+        }
+      }
+
+      return adjacent < 4
+    }
+
+    return false;
+  }
+
+  fn delete(&mut self, x: usize, y: usize) {
+    if self.get(x,y) == TileType::ROLL {
+      self.data[y][x] = TileType::EMPTY; 
+    }
+  }
 }
 
 pub struct Day4Solution {}
@@ -69,20 +93,8 @@ impl Solution for Day4Solution {
 
     for y in 0..grid.height() {
       for x in 0..grid.width() {
-        if grid.get(x, y) == TileType::ROLL {
-          let mut adjacent = 0;
-          for i in -1_i64..2 {
-            for j in -1_i64..2 {
-              let tile_type = grid.get((x as i64 + i) as usize,(y as i64 + j) as usize);
-              if !(i == 0 && j == 0) && tile_type == TileType::ROLL {
-                adjacent += 1;
-              }
-            }
-          }
-
-          if adjacent < 4 {
-            available += 1;
-          }
+        if grid.is_available(x, y) {
+          available += 1;
         }
       }
     }
@@ -91,6 +103,23 @@ impl Solution for Day4Solution {
   }
 
   fn part2(&self, inp: &str) -> i64 {
-    return 0;
+    let mut grid = Grid::parse(inp);
+    let mut deleted = 0;
+    let mut changed = true;
+
+    while changed {
+      changed = false;
+      for y in 0..grid.height() {
+        for x in 0..grid.width() {
+          if grid.is_available(x, y) {
+            grid.delete(x, y);
+            deleted += 1;
+            changed = true;
+          }
+        }
+      }
+    }
+
+    return deleted;
   }
 }
