@@ -1,4 +1,6 @@
-use std::{env, fs};
+use std::{fs, time::Instant};
+
+use clap::Parser;
 
 mod solution;
 use solution::Solution;
@@ -18,43 +20,79 @@ use day4::Day4Solution;
 mod day5;
 use day5::Day5Solution;
 
+/// Solutions to advent of code 2025
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+  /// Problem day number
+  #[arg(short, long, default_value_t = 0)]
+  day: usize,
+
+  /// Problem part
+  #[arg(short, long, default_value_t = 0)]
+  part: usize,
+
+  /// Problem input
+  #[arg(short, long, default_value_t = 0)]
+  input: usize
+}
+
+fn time<SolutionFunc>(f: SolutionFunc, input: &str) -> (i64, u128) where SolutionFunc: Fn(&str) -> i64 {
+  let start = Instant::now();
+  let result = f(input);
+  let duration = start.elapsed();
+  return (result, duration.as_micros());
+}
+
 fn main() {
-    let args = env::args().collect::<Vec<String>>();
-    
-    let dayStr = match args.get(1) {
-        Some(x) => x,
-        None => panic!("Please provide the aoc day to run")
-    };
+  let args = Args::parse();
 
-    let day = match dayStr.parse::<usize>() {
-        Ok(x) => x,
-        Err(e) => panic!("error parsing aoc day argument")
-    };
+  let solutions: Vec<Box<dyn Solution>> = vec![
+    Box::from(Day1Solution{}),
+    Box::from(Day2Solution{}),
+    Box::from(Day3Solution{}),
+    Box::from(Day4Solution{}),
+    Box::from(Day5Solution{})
+  ];
 
-    assert!(day > 0 && day < 25, "day must be in [1, 25]");
+  let solution: &Box<dyn Solution>  = match solutions.get(args.day - 1) {
+    Some(x) => x,
+    None => panic!("solution for day not yet implemented")
+  };
 
-    let solutions: Vec<Box<dyn Solution>> = vec![
-        Box::from(Day1Solution{}),
-        Box::from(Day2Solution{}),
-        Box::from(Day3Solution{}),
-        Box::from(Day4Solution{}),
-        Box::from(Day5Solution{})
-    ];
+  let sample_filename = format!("inputs/{}-sample.txt", args.day);
+  let sample_input = fs::read_to_string(&sample_filename).expect(&format!("error opening input file {}", sample_filename));
 
-    let solution: &Box<dyn Solution>  = match solutions.get(day - 1) {
-        Some(x) => x,
-        None => panic!("solution for day not yet implemented")
-    };
+  let full_filename = format!("inputs/{}-full.txt", args.day);
+  let full_input = fs::read_to_string(&full_filename).expect(&format!("error opening input file {}", full_filename));
 
-    let sample_filename = format!("inputs/{}-sample.txt", day);
-    let sample_input = fs::read_to_string(&sample_filename).expect(&format!("error opening input file {}", sample_filename));
+  println!("Problem {}", args.day);
 
-    println!("part 1 sample: {}", solution.part1(&sample_input));
-    println!("part 2 sample: {}", solution.part2(&sample_input));
+  if args.part == 0 || args.part == 1 {
+    println!("  Part 1");
 
-    let full_filename = format!("inputs/{}-full.txt", day);
-    let full_input = fs::read_to_string(&full_filename).expect(&format!("error opening input file {}", full_filename));
+    if args.input == 0 || args.input == 1 {
+        let (part1_sample, part1_sample_time) = time (|x| solution.part1(x), &sample_input);
+        println!("    Sample: {part1_sample} ({part1_sample_time} us)", );   
+    }
 
-    println!("part 1 full: {}", solution.part1(&full_input));
-    println!("part 2 full: {}", solution.part2(&full_input));
+    if args.input == 0 || args.input == 2 {
+        let (part1_full, part1_full_time) = time (|x| solution.part1(x), &full_input);
+        println!("    Full:   {} ({} us)", part1_full, part1_full_time);
+    }
+  }
+
+  if args.part == 0 || args.part == 2 {
+    println!("  Part 2");
+
+    if args.input == 0 || args.input == 1 {
+        let (part2_sample, part2_sample_time) = time (|x| solution.part2(x), &sample_input);
+        println!("    Sample: {part2_sample} ({part2_sample_time} us)", );
+    }
+
+    if args.input == 0 || args.input == 2 {
+        let (part2_full, part2_full_time) = time (|x| solution.part2(x), &full_input);
+        println!("    Full:   {} ({} us)", part2_full, part2_full_time);
+    }
+  }
 }
