@@ -132,7 +132,6 @@ impl Day6Solution {
 
     if current_problem.operator != Op::INVALID {
       results.push(current_problem);
-      current_problem = MathProblem::new();
     }
 
     return results;

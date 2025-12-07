@@ -29,7 +29,7 @@ impl Day3Solution {
     return res;
   }
 
-  fn find_max_joltage_2_battery(&self, bank: &[i64], cache: &mut HashMap<(usize, usize), i64>) -> i64 {
+  fn find_max_joltage_2_battery(&self, bank: &[i64], _: &mut HashMap<(usize, usize), i64>) -> i64 {
     let mut cur_max = 0;
     let mut best_bat = 0;
 

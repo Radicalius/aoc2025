@@ -29,8 +29,8 @@ impl Day1Solution {
           _ => panic!("invalid direction")
       };
 
-      let countStr = line.get(1..).unwrap();
-      let count = countStr.parse::<i32>().unwrap();
+      let count_str = line.get(1..).unwrap();
+      let count = count_str.parse::<i32>().unwrap();
 
       data.push(Rotation{
           direction: direction,
