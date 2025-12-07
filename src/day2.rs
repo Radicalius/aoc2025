@@ -26,6 +26,10 @@ impl Day2Solution {
   }
 
   fn count_digits(&self, num: i64) -> u32 {
+    if num == 0 {
+      return 1;
+    }
+
     return num.ilog10() + 1;
   }
 
@@ -84,12 +88,43 @@ impl Day2Solution {
 
     return res;
   }
+
+  fn next_invalid(&self, start: i64) -> i64 {
+    let mut res = start;
+
+    let mut digits = self.count_digits(start);
+    if digits % 2 != 0 {
+      res = 10_i64.pow(digits);
+      digits += 1;
+    }
+
+    let mut top = self.get_chunk(res, digits / 2, 1);
+    res = top + top * 10_i64.pow(digits / 2);
+    while res <= start {
+      top += 1;
+      res = top + top * 10_i64.pow(digits / 2);
+      if self.count_digits(res) > digits {
+        res = self.next_invalid(res);
+      }
+    }
+
+    res
+  }
 }
 
 impl Solution for Day2Solution  {
   fn part1(&self, input: &str) -> i64 {
     let data = self.parse(input);
-    return self.sum_invalid(data, |data| self.is_invalid_part1(data));
+    let mut sum = 0;
+    for range in data {
+      let mut cur = self.next_invalid(range.start - 1);
+      while cur <= range.end {
+        sum += cur;
+        cur = self.next_invalid(cur);
+      }
+    }
+
+    sum
   }
 
   fn part2(&self, input: &str) -> i64 {
