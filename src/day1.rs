@@ -71,19 +71,28 @@ impl Solution for Day1Solution {
     let mut zeros = 0;
 
     for rot in data {
+
       if rot.direction == Direction::LEFT {
-        for i in 0..rot.amount {
-          cur = (cur - 1) % 100;
-          if cur == 0 {
-              zeros +=1;
-          }
+        zeros += (rot.amount / 100) as i64;
+        let start = cur;
+        cur = cur - (rot.amount % 100);
+        if start > 0 && cur <= 0 {
+          zeros += 1;
+        }
+
+        if cur < 0 {
+          cur += 100;
         }
       } else {
-        for i in 0..rot.amount {
-          cur = (cur + 1) % 100;
-          if cur == 0 {
-              zeros +=1;
-          }
+        zeros += (rot.amount / 100) as i64;
+        let start= cur;
+        cur = cur + (rot.amount % 100);
+        if start < 100 && cur >= 100 {
+          zeros += 1;
+        }
+
+        if cur >= 100 {
+          cur -= 100;
         }
       }
     }
