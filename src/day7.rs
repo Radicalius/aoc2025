@@ -53,6 +53,36 @@ impl TachyonManifold {
 
 pub struct Day7Solution {}
 
+impl Day7Solution {
+  fn part2_helper(&self, m: &TachyonManifold, sx: usize, sy: usize, cache: &mut HashMap<(usize, usize), i64>) -> i64 {
+    if cache.contains_key(&(sx, sy)) {
+      return *cache.get(&(sx, sy)).unwrap();
+    }
+    
+    let column = match m.splitters_by_col.get(&sx) {
+      Some(x) => x,
+      None => return 1
+    };
+
+    let mut splitter_y: Option<usize> = Option::None;
+    for i in column {
+      if *i > sy {
+        splitter_y = Some(*i);
+        break;
+      }
+    }
+
+    if splitter_y.is_none() {
+      return 1;
+    }
+
+    let ret = self.part2_helper(m, sx-1, splitter_y.unwrap(), cache) + self.part2_helper(m, sx+1, splitter_y.unwrap(), cache);
+    cache.insert((sx, sy), ret);
+    return ret;
+  
+  }
+}
+
 impl Solution for Day7Solution {
   fn part1(&self, input: &str) -> i64 {
     let manifold = TachyonManifold::parse(input);
@@ -83,6 +113,8 @@ impl Solution for Day7Solution {
   }
 
   fn part2(&self, input: &str) -> i64 {
-    return 0;
+    let manifold = TachyonManifold::parse(input);
+    let mut cache = HashMap::new();
+    return self.part2_helper(&manifold, manifold.start_x, manifold.start_y, &mut cache);
   }
 }
