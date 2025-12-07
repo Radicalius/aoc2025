@@ -20,6 +20,9 @@ use day4::Day4Solution;
 mod day5;
 use day5::Day5Solution;
 
+mod day6;
+use day6::Day6Solution;
+
 /// Solutions to advent of code 2025
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -52,7 +55,8 @@ fn main() {
     Box::from(Day2Solution{}),
     Box::from(Day3Solution{}),
     Box::from(Day4Solution{}),
-    Box::from(Day5Solution{})
+    Box::from(Day5Solution{}),
+    Box::from(Day6Solution{})
   ];
 
   let solution: &Box<dyn Solution>  = match solutions.get(args.day - 1) {
