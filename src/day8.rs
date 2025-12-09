@@ -48,11 +48,8 @@ impl Day8Solution {
 
     return size;
   }
-}
 
-impl Solution for Day8Solution {
-  fn part1(&self, input: &str) -> i64 {
-    let mut boxes = self.parse(input);
+  fn get_sorted_edges(&self, boxes: &Vec<JunctionBox>) -> Vec<(usize, usize, f64)> {
     let mut sorted: Vec<(usize, usize, f64)> = vec![];
     for a in 0..boxes.len() {
       for b in 0..boxes.len() {
@@ -62,15 +59,28 @@ impl Solution for Day8Solution {
       }
     }
 
+    sorted.sort_by(|a, b| a.2.total_cmp(&b.2));
+    return sorted;
+  }
+
+  fn connect(&self, boxes: &mut Vec<JunctionBox>, a: usize, b: usize) {
+    boxes[a].connected.push(b);
+    boxes[b].connected.push(a);
+  }
+}
+
+impl Solution for Day8Solution {
+  fn part1(&self, input: &str) -> i64 {
+    let mut boxes = self.parse(input);
+
     let mut total_connections = 10;
     if boxes.len() > 20 {
       total_connections = 1000;
     }
 
-    sorted.sort_by(|a, b| a.2.total_cmp(&b.2));
+    let sorted = self.get_sorted_edges(&boxes);
     for connection in 0..total_connections {
-      boxes[sorted[connection].0].connected.push(sorted[connection].1);
-      boxes[sorted[connection].1].connected.push(sorted[connection].0);
+      self.connect(&mut boxes, sorted[connection].0, sorted[connection].1);
     }
 
     let mut seen = HashSet::new();
@@ -85,6 +95,18 @@ impl Solution for Day8Solution {
   }
 
   fn part2(&self, input: &str) -> i64 {
+    let mut boxes = self.parse(input);
+    let sorted = self.get_sorted_edges(&boxes);
+    let mut seen = HashSet::new();
+    for i in  0..sorted.len() {
+      self.connect(&mut boxes, sorted[i].0, sorted[i].1);
+      seen.clear();
+      let zero_circuit_size = self.find_circuit_size(&boxes, 0, &mut seen);
+      if zero_circuit_size as usize == boxes.len() {
+        return boxes[sorted[i].0].x * boxes[sorted[i].1].x;
+      }
+    }
+    
     return 0;
   }
 }
