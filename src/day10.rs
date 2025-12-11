@@ -67,15 +67,15 @@ pub struct Day10Solution {}
 
 impl Day10Solution {
   fn part1_helper(&self, mac: &Machine) -> i64 {
-    let mut queue: BinaryHeap<(i64, u64)> = BinaryHeap::new();
+    let mut queue: BinaryHeap<(i64, i64, u64)> = BinaryHeap::new();
     let mut seen: HashSet<u64> = HashSet::new();
-    queue.push((0, 0));
+    queue.push((0, 0, 0));
     seen.insert(0);
     
     while queue.len() > 0 {
       let top = queue.pop().unwrap();
-      let dist = top.0;
-      let state = top.1;
+      let dist = top.1;
+      let state = top.2;
       if state == mac.target_state {
         return -dist;
       }
@@ -85,7 +85,7 @@ impl Day10Solution {
       for button in 0..mac.buttons.len() {
         let next_state = mac.press(state, button);
         if !seen.contains(&next_state) {
-          queue.push((dist - 1, mac.press(state, button)));
+          queue.push((dist - 1 - (next_state ^ mac.target_state).count_ones() as i64, dist - 1, mac.press(state, button)));
         }
       }
     }
