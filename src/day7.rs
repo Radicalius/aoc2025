@@ -18,11 +18,10 @@ impl TachyonManifold {
       splitters_by_col: HashMap::new()
     };
 
-    let mut x: usize = 0;
+    let mut x: usize;
     let mut y: usize = 0;
 
     for row in input.split("\n") {
-      
       x = 0;
       for tile in row.chars() {
         match tile {

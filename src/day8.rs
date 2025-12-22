@@ -1,4 +1,4 @@
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::HashSet;
 
 use crate::solution::Solution;
 

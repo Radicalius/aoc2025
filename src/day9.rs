@@ -49,7 +49,7 @@ impl Solution for Day9Solution {
     return max_area;
   }
 
-  fn part2(&self, input: &str) -> i64 {
+  fn part2(&self, _: &str) -> i64 {
     return 0;
   }
 }

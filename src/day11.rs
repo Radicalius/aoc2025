@@ -1,9 +1,8 @@
-use std::{collections::{HashMap, HashSet}, rc::Rc};
+use std::collections::{HashMap, HashSet};
 
 use crate::solution::Solution;
 
 struct Device {
-  name: String,
   outputs: Vec<String>
 }
 
@@ -19,7 +18,7 @@ impl Day11Solution {
 
       let name = parts[0].to_owned();
       let output_names = parts[1].split(" ").map(|x| x.to_owned()).collect::<Vec<String>>();
-      device_map.insert(name.clone(), Device { name: name.clone(), outputs: output_names });
+      device_map.insert(name.clone(), Device { outputs: output_names });
     }
 
     return device_map;

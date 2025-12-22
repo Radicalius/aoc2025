@@ -37,19 +37,6 @@ impl Day2Solution {
     return (num / 10_i64.pow(size * offset)) % 10_i64.pow(size)
   }
 
-  fn is_invalid_part1(&self, num: i64) -> bool {
-    let digits = self.count_digits(num);
-
-    if digits % 2 != 0 || digits == 0 {
-      return false;
-    }
-
-    let lower = self.get_chunk(num, digits / 2, 0);
-    let upper = self.get_chunk(num, digits / 2, 1);
-
-    return upper == lower;
-  }
-
   fn is_invalid_part2(&self, num: i64) -> bool {
     let digits = self.count_digits(num);
     
