@@ -1,6 +1,4 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
-
-use regex::Regex;
+use std::{collections::{BinaryHeap, HashSet}, usize};
 
 use crate::solution::Solution;
 
@@ -84,14 +82,53 @@ impl Machine {
   fn press(&self, state: u64, button: usize) -> u64 {
     return state ^ self.buttons[button]
   }
+}
 
-  fn press_part2(&self, state: &Vec<i64>, button: usize) -> Vec<i64> {
-    let mut new_state = state.clone();
-    for i in &self.buttons_part2[button] {
-      new_state[*i] += 1;
+struct Matrix {
+  contents: Vec<Vec<i64>>
+}
+
+impl Matrix {
+  fn construct(m: &Machine) -> Matrix {
+    let mut matrix = Matrix{ contents: Vec::new() };
+
+    for i in 0..m.target_joltage.len() {
+      let mut row = Vec::new();
+      for button in 0..m.buttons_part2.len() {
+        if m.buttons_part2[button].contains(&i) {
+          row.push(1);
+        } else {
+          row.push(0);
+        }
+      }
+
+      row.push(m.target_joltage[i]);
+      matrix.contents.push(row);
     }
 
-    return new_state;
+    return matrix;
+  }
+
+  fn gaussian_elim(&mut self) {
+    for col in 0..self.contents.len() {
+      for row in 0..self.contents.len() {
+        if self.contents[row][col] == 1 {
+          self.swap_rows(row, col);
+        }
+      }
+    }
+  }
+
+  fn swap_rows(&mut self, r1: usize, r2: usize) {
+    let row1 = self.contents[r1].clone();
+    self.contents[r1] = self.contents[r2].clone();
+    self.contents[r2] = row1;
+  }
+
+  fn print(&self) {
+    for i in self.contents.iter() {
+      println!("{:?}", i);
+    }
   }
 }
 
@@ -124,64 +161,6 @@ impl Day10Solution {
 
     return 0;
   }
-
-  fn part2_helper(&self, mac: &Machine) -> i64 {
-    let mut queue: BinaryHeap<(i64, i64, Vec<i64>)> = BinaryHeap::new();
-    let mut seen: HashSet<String> = HashSet::new();
-
-    let mut init_vec = vec![];
-    for _ in 0..mac.target_joltage.len() {
-      init_vec.push(0);
-    }
-
-    queue.push((0, 0, init_vec.clone()));
-    
-    while queue.len() > 0 {
-      let top = queue.pop().unwrap();
-      println!("{:?} {:?}", top, mac.target_joltage);
-      let dist = top.1;
-      let state = top.2;
-      if state == mac.target_joltage {
-        return -dist;
-      }
-
-      if seen.contains(format!("{:?}", state).as_str()) {
-        continue;
-      }
-
-      seen.insert(format!("{:?}", state));
-
-      for button in 0..mac.buttons.len() {
-        let next_state = mac.press_part2(&state, button);
-        if !seen.contains(format!("{:?}", next_state).as_str()) {
-          
-          let mut valid = true;
-          for i in 0..next_state.len() {
-            if next_state[i] > mac.target_joltage[i] {
-              valid = false;
-            }
-          }
-
-          if valid {
-            queue.push((dist - 1 - Day10Solution::part2_heuristic(&mac.target_joltage, &next_state), dist - 1, next_state));
-          }
-        }
-      }
-    }
-
-    return 0;
-  }
-
-  fn part2_heuristic(a: &Vec<i64>, b: &Vec<i64>) -> i64 {
-    let mut sum = 0;
-    for i in 0..a.len() {
-      if a != b {
-        sum += 1;
-      }
-    }
-
-    return sum;
-  }
 }
 
 impl Solution for Day10Solution {
@@ -196,12 +175,15 @@ impl Solution for Day10Solution {
   }
 
   fn part2(&self, input: &str) -> i64 {
-    let mut sum: i64 = 0;
+    let sum: i64 = 0;
     for line in input.split("\n") {
       let mac = Machine::parse(line);
       println!("{:?}", mac);
-      let res = self.part2_helper(&mac);
-      sum += res as i64;
+      let mut mat = Matrix::construct(&mac);
+      mat.print();
+      println!();
+      mat.gaussian_elim();
+      mat.print();
     }
     return sum; 
   }
