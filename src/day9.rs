@@ -1,7 +1,5 @@
 use std::cmp::{min, max};
 
-use rand::Rng;
-
 use crate::solution::Solution;
 
 #[derive(Debug, Clone, Copy)]
@@ -12,12 +10,12 @@ struct Tile {
 
 impl Tile {
   fn area(&self, other: &Tile) -> i64 {
-    return (other.x - self.x + 1).abs() * (other.y - self.y + 1).abs() 
+    return ((other.x - self.x).abs() + 1) * ((other.y - self.y).abs() + 1)
   }
 
   fn inside(&self, a: &Tile, b: &Tile) -> bool {
     return min(a.x, b.x) < self.x && self.x < max(a.x, b.x) &&
-           min(a.y, a.y) < self.y && self.y < max(a.y, b.y);
+           min(a.y,b.y) < self.y && self.y < max(a.y, b.y);
   }
 }
 
@@ -43,19 +41,17 @@ impl Line {
   }
 
   fn intersect_ray(&self, x: i64, y: i64) -> bool {
-    let mut int_x = -1;
-    let mut int_y = -1;
+    let int_x;
+    let int_y;
     if self.t1.x == self.t2.x {
       int_x = self.t1.x;
       int_y = y + (self.t1.x - x);
-      //println!("{:?} x {} {}", self, int_x, int_y);
       if int_y < min(self.t1.y, self.t2.y) || int_y > max(self.t1.y, self.t2.y) {
         return false;
       }
     } else {
       int_x = x + (self.t1.y - y);
       int_y = self.t1.y;
-      //println!("{:?} y {} {}", self, int_x, int_y);
       if int_x < min(self.t1.x, self.t2.x) || int_x > max(self.t1.x, self.t2.x) {
         return false;
       }
@@ -93,7 +89,7 @@ impl Day9Solution {
       lines.push(Line::new(&tiles[i-1], &tiles[i]));
     }
 
-    lines.push(Line::new(&tiles[0], &tiles[tiles.len()-1]));;
+    lines.push(Line::new(&tiles[0], &tiles[tiles.len()-1]));
 
     return lines;
   }
@@ -134,42 +130,29 @@ impl Solution for Day9Solution {
     let lines = self.find_lines(&tiles);
 
     let mut max_area = 0;
-    let mut max_a: Option<&Tile> = None;
-    let mut max_b: Option<&Tile> = None;
     for a in &tiles {
       'out: for b in &tiles {
         if a.area(b) > max_area {
 
-          // if !self.is_inside(&lines, b.x, a.y) {
-          //   continue;
-          // }
+          if !self.is_inside(&lines, b.x, a.y) {
+            continue;
+          }
 
-          // if !self.is_inside(&lines, a.x, b.y) {
-          //   continue;
-          // }
+          if !self.is_inside(&lines, a.x, b.y) {
+            continue;
+          }
 
-          // for l in &lines {
-          //   if l.intersect_square(a, b) {
-          //     continue 'out;
-          //   }
-          // }
+          if !self.is_inside(&lines, a.x + (b.x - a.x) / 2, a.y + (b.y - a.y) / 2) {
+            continue;
+          }
 
-          let x_max = max(a.x, b.x) + 1;
-          let x_min = min(a.x, b.x);
-          let y_max = max(a.y, b.y) + 1;
-          let y_min = min(a.y, b.y);
-          for _ in 0..100 {
-            let x = rand::thread_rng().gen_range(x_min..x_max);
-            let y = rand::thread_rng().gen_range(y_min..y_max);
-
-            if !self.is_inside(&lines, x, y) {
+          for l in &lines {
+            if l.intersect_square(a, b) {
               continue 'out;
             }
           }
 
           max_area = a.area(b);
-          max_a = Some(a);
-          max_b = Some(b);
         }
       }
     }
