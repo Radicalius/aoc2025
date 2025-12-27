@@ -1,4 +1,4 @@
-use std::{cmp::min, collections::{BinaryHeap, HashSet}, usize};
+use std::{cmp::{max, min}, collections::{BinaryHeap, HashSet}, usize};
 
 use crate::solution::Solution;
 
@@ -110,7 +110,7 @@ impl Matrix {
   }
 
   fn gaussian_elim(&mut self) {
-    for col in 0..(self.contents.len()-1) {
+    'col: for col in 0..(self.contents.len()-1) {
       for row in 0..self.contents.len() {
         let mut leading_zeros = 0;
         for i in 0..self.contents[row].len() {
@@ -126,16 +126,20 @@ impl Matrix {
         }
 
         if self.contents[row][col] != 0 {
+          println!("{}", leading_zeros);
           self.swap_rows(row, col);
           self.div_row(col, self.contents[col][col] as f64);
 
           for tar in (col+1)..(self.contents.len()) {
             if self.contents[tar][col] != 0 {
-              self.sub_rows(row, tar, self.contents[tar][col] as f64);
+              println!("sub {} {}", col, tar);
+              self.sub_rows(col, tar, self.contents[tar][col] as f64);
             }
           }
 
-          continue;
+          self.print();
+          println!();
+          continue 'col;
         }
       }
     }
@@ -175,9 +179,22 @@ impl Matrix {
     let width = self.contents[0].len();
     for row in 0..(self.contents.len()) {
       if self.contents[row][ind] != 0 {
-        m = min(m, self.contents[row][width-1] / self.contents[row][ind]);
+        m = min(m, (self.contents[row][width-1] / self.contents[row][ind]).abs());
       }
     }
+
+    if m == 100000000 {
+      return 0;
+    }
+
+    // return m;
+    // let mut m = 0;
+    // let width = self.contents[0].len();
+    // for i in 0..self.contents.len() {
+    //   m = max(m, self.contents[i][width-1]);
+    // }
+
+    return 100;
 
     return m;
   }
