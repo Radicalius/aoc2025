@@ -1,4 +1,4 @@
-use std::{collections::{BinaryHeap, HashSet}, usize};
+use std::{cmp::min, collections::{BinaryHeap, HashSet}, usize};
 
 use crate::solution::Solution;
 
@@ -110,10 +110,32 @@ impl Matrix {
   }
 
   fn gaussian_elim(&mut self) {
-    for col in 0..self.contents.len() {
+    for col in 0..(self.contents.len()-1) {
       for row in 0..self.contents.len() {
-        if self.contents[row][col] == 1 {
+        let mut leading_zeros = 0;
+        for i in 0..self.contents[row].len() {
+          if self.contents[row][i] == 0 {
+            leading_zeros += 1;
+          } else {
+            break;
+          }
+        }
+
+        if leading_zeros < col {
+          continue;
+        }
+
+        if self.contents[row][col] != 0 {
           self.swap_rows(row, col);
+          self.div_row(col, self.contents[col][col] as f64);
+
+          for tar in (col+1)..(self.contents.len()) {
+            if self.contents[tar][col] != 0 {
+              self.sub_rows(row, tar, self.contents[tar][col] as f64);
+            }
+          }
+
+          continue;
         }
       }
     }
@@ -123,6 +145,76 @@ impl Matrix {
     let row1 = self.contents[r1].clone();
     self.contents[r1] = self.contents[r2].clone();
     self.contents[r2] = row1;
+  }
+
+  fn sub_rows(&mut self, source: usize, target: usize, factor: f64) {
+    for i in 0..self.contents[source].len() {
+      self.contents[target][i] -= (self.contents[source][i] as f64 * factor) as i64;
+    }
+  }
+
+  fn div_row(&mut self, tar: usize, factor: f64) {
+    for i in 0..self.contents[tar].len() {
+      self.contents[tar][i] = (self.contents[tar][i] as f64 / factor) as i64;
+    }
+  }
+
+  fn find_free_variables(&self) -> Vec<usize> {
+    let mut free_variables = vec![];
+    for i in 0..(self.contents[0].len() - 1) {
+      if self.contents.len() <= i || self.contents[i][i] == 0 {
+        free_variables.push(i);
+      }
+    }
+
+    return free_variables;
+  }
+
+  fn find_max_value(&self, ind: usize) -> i64 {
+    let mut m = 100000000;
+    let width = self.contents[0].len();
+    for row in 0..(self.contents.len()) {
+      if self.contents[row][ind] != 0 {
+        m = min(m, self.contents[row][width-1] / self.contents[row][ind]);
+      }
+    }
+
+    return m;
+  }
+
+  fn solve(&self, input: &mut Vec<Option<i64>>) -> bool {
+    let mut changed = true;
+    while changed {
+      changed = false;
+
+      let width = self.contents[0].len();
+      'row: for row in 0..self.contents.len() {
+        let mut total = self.contents[row][width-1];
+        let mut target: Option<usize> = None;
+        for col in 0..(width-1) {
+          if self.contents[row][col] == 0{
+            continue;
+          } else if input[col].is_some() {
+            total -= input[col].unwrap() * self.contents[row][col];
+          } else if target.is_none() {
+            target = Some(col);
+          } else {
+            continue 'row;
+          }
+        }
+
+        if target.is_none() && total != 0 {
+          return false;
+        }
+
+        if target.is_some() {
+          input[target.unwrap()] = Some(total);
+          changed = true;
+        }
+      }
+    }
+
+    return input.iter().all(|x| x.is_some());
   }
 
   fn print(&self) {
@@ -161,6 +253,44 @@ impl Day10Solution {
 
     return 0;
   }
+
+  fn part2_helper(&self, m: &Matrix, free: &Vec<usize>, maxes: &Vec<i64>, state: &mut Vec<i64>, index: usize) -> Option<i64> {
+    if state.len() == free.len() {
+      let mut input: Vec<Option<i64>> = vec![];
+      for _ in 0..(m.contents[0].len() - 1) {
+        input.push(None);
+      }
+
+      for (si, j) in free.iter().enumerate() {
+        input[*j] = Some(state[si]);
+      }
+
+      if m.solve(&mut input) {
+        let mut sum = 0;
+        for i in &input {
+          if i.unwrap() < 0 {
+            return None;
+          }
+          sum += i.unwrap();
+        }
+        return Some(sum);
+      } else {
+        return None;
+      }
+    }
+
+    let mut min: Option<i64> = None;
+    for i in 0..(maxes[index]+1) {
+      state.push(i);
+      let c = self.part2_helper(m, free, maxes, state, index+1);
+      if c.is_some() &&  (min.is_none() || c < min) {
+        min = c;
+      }
+      state.pop();
+    }
+
+    return min;
+  }
 }
 
 impl Solution for Day10Solution {
@@ -175,7 +305,7 @@ impl Solution for Day10Solution {
   }
 
   fn part2(&self, input: &str) -> i64 {
-    let sum: i64 = 0;
+    let mut sum: i64 = 0;
     for line in input.split("\n") {
       let mac = Machine::parse(line);
       println!("{:?}", mac);
@@ -184,6 +314,21 @@ impl Solution for Day10Solution {
       println!();
       mat.gaussian_elim();
       mat.print();
+      println!();
+
+      let free = mat.find_free_variables();
+      println!("{:?}", mat.find_free_variables());
+
+      let maxes = free.iter().map(|x| mat.find_max_value(*x)).collect::<Vec<i64>>();
+      println!("{:?}", maxes);
+
+      let mut state = vec![];
+
+      let sol = self.part2_helper(&mat, &free, &maxes, &mut state, 0);
+      assert!(sol.is_some());
+      println!("sol: {}", sol.unwrap());
+
+      sum += sol.unwrap();
     }
     return sum; 
   }
