@@ -1,4 +1,4 @@
-use std::{cmp::{max, min}, collections::{BinaryHeap, HashSet}, usize};
+use std::{cmp::max, collections::{BinaryHeap, HashSet}, usize};
 
 use crate::solution::Solution;
 
@@ -85,7 +85,7 @@ impl Machine {
 }
 
 struct Matrix {
-  contents: Vec<Vec<i64>>
+  contents: Vec<Vec<f64>>
 }
 
 impl Matrix {
@@ -93,16 +93,16 @@ impl Matrix {
     let mut matrix = Matrix{ contents: Vec::new() };
 
     for i in 0..m.target_joltage.len() {
-      let mut row = Vec::new();
+      let mut row: Vec<f64> = Vec::new();
       for button in 0..m.buttons_part2.len() {
         if m.buttons_part2[button].contains(&i) {
-          row.push(1);
+          row.push(1.0);
         } else {
-          row.push(0);
+          row.push(0.0);
         }
       }
 
-      row.push(m.target_joltage[i]);
+      row.push(m.target_joltage[i] as f64);
       matrix.contents.push(row);
     }
 
@@ -114,7 +114,7 @@ impl Matrix {
       for row in 0..self.contents.len() {
         let mut leading_zeros = 0;
         for i in 0..self.contents[row].len() {
-          if self.contents[row][i] == 0 {
+          if self.contents[row][i] == 0.0 {
             leading_zeros += 1;
           } else {
             break;
@@ -125,20 +125,16 @@ impl Matrix {
           continue;
         }
 
-        if self.contents[row][col] != 0 {
-          println!("{}", leading_zeros);
+        if self.contents[row][col] != 0.0 {
           self.swap_rows(row, col);
           self.div_row(col, self.contents[col][col] as f64);
 
           for tar in (col+1)..(self.contents.len()) {
-            if self.contents[tar][col] != 0 {
-              println!("sub {} {}", col, tar);
+            if self.contents[tar][col] != 0.0 {
               self.sub_rows(col, tar, self.contents[tar][col] as f64);
             }
           }
 
-          self.print();
-          println!();
           continue 'col;
         }
       }
@@ -153,20 +149,20 @@ impl Matrix {
 
   fn sub_rows(&mut self, source: usize, target: usize, factor: f64) {
     for i in 0..self.contents[source].len() {
-      self.contents[target][i] -= (self.contents[source][i] as f64 * factor) as i64;
+      self.contents[target][i] -= self.contents[source][i] * factor;
     }
   }
 
   fn div_row(&mut self, tar: usize, factor: f64) {
     for i in 0..self.contents[tar].len() {
-      self.contents[tar][i] = (self.contents[tar][i] as f64 / factor) as i64;
+      self.contents[tar][i] = self.contents[tar][i] / factor;
     }
   }
 
   fn find_free_variables(&self) -> Vec<usize> {
     let mut free_variables = vec![];
     for i in 0..(self.contents[0].len() - 1) {
-      if self.contents.len() <= i || self.contents[i][i] == 0 {
+      if self.contents.len() <= i || self.contents[i][i] == 0.0 {
         free_variables.push(i);
       }
     }
@@ -174,29 +170,22 @@ impl Matrix {
     return free_variables;
   }
 
-  fn find_max_value(&self, ind: usize) -> i64 {
-    let mut m = 100000000;
+  fn find_max_value(&self, ind: usize, m_prime: i64) -> f64 {
+    let mut m: f64 = 100000000.0;
     let width = self.contents[0].len();
-    for row in 0..(self.contents.len()) {
-      if self.contents[row][ind] != 0 {
-        m = min(m, (self.contents[row][width-1] / self.contents[row][ind]).abs());
+    'out: for row in 0..(self.contents.len()) {
+      for i in 0..width {
+        if self.contents[row][i] < 0.0 {
+          continue 'out;
+        }
+      }
+
+      if self.contents[row][ind] != 0.0 {
+        m = m.min(self.contents[row][width-1] / self.contents[row][ind]);
       }
     }
 
-    if m == 100000000 {
-      return 0;
-    }
-
-    // return m;
-    // let mut m = 0;
-    // let width = self.contents[0].len();
-    // for i in 0..self.contents.len() {
-    //   m = max(m, self.contents[i][width-1]);
-    // }
-
-    return 100;
-
-    return m;
+    return m.min(m_prime as f64);
   }
 
   fn solve(&self, input: &mut Vec<Option<i64>>) -> bool {
@@ -209,10 +198,10 @@ impl Matrix {
         let mut total = self.contents[row][width-1];
         let mut target: Option<usize> = None;
         for col in 0..(width-1) {
-          if self.contents[row][col] == 0{
+          if self.contents[row][col] == 0.0 {
             continue;
           } else if input[col].is_some() {
-            total -= input[col].unwrap() * self.contents[row][col];
+            total -= input[col].unwrap() as f64 * self.contents[row][col];
           } else if target.is_none() {
             target = Some(col);
           } else {
@@ -220,24 +209,18 @@ impl Matrix {
           }
         }
 
-        if target.is_none() && total != 0 {
+        if target.is_none() && (total > 0.0001 || total < -0.0001) {
           return false;
         }
 
         if target.is_some() {
-          input[target.unwrap()] = Some(total);
+          input[target.unwrap()] = Some((total / self.contents[row][target.unwrap()]).round() as i64);
           changed = true;
         }
       }
     }
 
     return input.iter().all(|x| x.is_some());
-  }
-
-  fn print(&self) {
-    for i in self.contents.iter() {
-      println!("{:?}", i);
-    }
   }
 }
 
@@ -271,7 +254,7 @@ impl Day10Solution {
     return 0;
   }
 
-  fn part2_helper(&self, m: &Matrix, free: &Vec<usize>, maxes: &Vec<i64>, state: &mut Vec<i64>, index: usize) -> Option<i64> {
+  fn part2_helper(&self, m: &Matrix, free: &Vec<usize>, maxes: &Vec<f64>, state: &mut Vec<i64>, index: usize) -> Option<i64> {
     if state.len() == free.len() {
       let mut input: Vec<Option<i64>> = vec![];
       for _ in 0..(m.contents[0].len() - 1) {
@@ -297,7 +280,11 @@ impl Day10Solution {
     }
 
     let mut min: Option<i64> = None;
-    for i in 0..(maxes[index]+1) {
+    for i in 0..(maxes[index] as i64+1) {
+      if min.is_some() && i > min.unwrap() {
+        break;
+      }
+
       state.push(i);
       let c = self.part2_helper(m, free, maxes, state, index+1);
       if c.is_some() &&  (min.is_none() || c < min) {
@@ -325,25 +312,22 @@ impl Solution for Day10Solution {
     let mut sum: i64 = 0;
     for line in input.split("\n") {
       let mac = Machine::parse(line);
-      println!("{:?}", mac);
       let mut mat = Matrix::construct(&mac);
-      mat.print();
-      println!();
       mat.gaussian_elim();
-      mat.print();
-      println!();
 
       let free = mat.find_free_variables();
-      println!("{:?}", mat.find_free_variables());
 
-      let maxes = free.iter().map(|x| mat.find_max_value(*x)).collect::<Vec<i64>>();
-      println!("{:?}", maxes);
+      let mut m_prime = 0;
+      for i in mac.target_joltage {
+        m_prime = max(m_prime, i);
+      }
+
+      let maxes = free.iter().map(|x| mat.find_max_value(*x, m_prime)).collect::<Vec<f64>>();
 
       let mut state = vec![];
 
       let sol = self.part2_helper(&mat, &free, &maxes, &mut state, 0);
       assert!(sol.is_some());
-      println!("sol: {}", sol.unwrap());
 
       sum += sol.unwrap();
     }
