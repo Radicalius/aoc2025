@@ -5,6 +5,22 @@ struct Shape {
   grid: [[bool; 3]; 3]
 }
 
+impl Shape {
+  fn area(&self) -> i64 {
+    let mut a = 0;
+    for i in self.grid {
+      for j in i {
+        if j {
+          a += 1;
+        }
+      }
+    }
+
+    return a;
+  }
+}
+
+#[derive(Debug)]
 struct Problem {
   width: u32,
   height: u32,
@@ -69,7 +85,21 @@ impl Day12Solution {
 impl Solution for Day12Solution {
   fn part1(&self, input: &str) -> i64 {
     let (shapes, problems) = Day12Solution::parse(input);
-    return 0;
+    let mut possible = 0;
+    for problem in problems {
+      let total_area: i64 = problem.shapes.iter().enumerate().map(|(i,c)| shapes[i].area() * *c as i64).sum();
+      let total_shapes: u32 = problem.shapes.iter().sum();
+      if problem.width * problem.height < total_area as u32 {
+        // Impossible
+      } else if problem.width * problem.height >= 9 * total_shapes {
+        possible += 1;
+      } else {
+        println!("{:?}", problem);
+        assert!(false, "Unimplemented");
+      }
+    }
+    
+    return possible;
   }
 
   fn part2(&self, input: &str) -> i64 {
