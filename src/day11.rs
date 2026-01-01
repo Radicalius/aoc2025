@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::solution::Solution;
 
@@ -39,34 +39,27 @@ impl Day11Solution {
     return total;
   }
 
-  fn part2_helper(&self, devices: &HashMap<String, Device>, current: String, seen_dac: bool, seen_fft: bool, seen: &mut HashSet<String>) -> i64 {
-    if current == "out" {
-      println!("in");
-      if seen_dac && seen_fft {
-        return 1;
-      } else {
-        return 0;
-      }
+  fn part2_helper(&self, devices: &HashMap<String, Device>, current: String, target: &str, cache: &mut HashMap<String, i64>) -> i64 {
+    if current == target {
+      return 1;
     }
 
-    if seen.contains(&current) {
+    if current == "out" {
       return 0;
     }
 
-    seen.insert(current.clone());
+    if cache.contains_key(&current) {
+      return *cache.get(&current).unwrap();
+    }
 
     let device = devices.get(&current).expect(format!("undefined device {}", current).as_str());
 
-    let new_seen_dac = seen_dac || current == "dac";
-    let new_seen_fft = seen_fft || current == "fft";
-
     let mut  total = 0;
     for output in device.outputs.iter() {
-      total += self.part2_helper(devices, output.clone(), new_seen_dac, new_seen_fft, seen);
+      total += self.part2_helper(devices, output.clone(), target, cache);
     }
 
-    seen.remove(&current);
-
+    cache.insert(current, total);
     return total;
   }
 }
@@ -79,6 +72,15 @@ impl Solution for Day11Solution {
 
   fn part2(&self, input: &str) -> i64 {
     let devices = self.parse(input);
-    return self.part2_helper(&devices, "svr".to_owned(), false, false, &mut HashSet::new());
+    
+    let srv_to_fft = self.part2_helper(&devices, "svr".to_owned(), "fft", &mut HashMap::new());
+    let fft_to_dac = self.part2_helper(&devices, "fft".to_owned(), "dac", &mut HashMap::new());
+    let dac_to_out = self.part2_helper(&devices, "dac".to_owned(), "out", &mut HashMap::new());
+
+    let srv_to_dac = self.part2_helper(&devices, "svr".to_owned(), "dac", &mut HashMap::new());
+    let dac_to_fft = self.part2_helper(&devices, "dac".to_owned(), "fft", &mut HashMap::new());
+    let fft_to_out = self.part2_helper(&devices, "fft".to_owned(), "out", &mut HashMap::new());
+
+    return srv_to_fft * fft_to_dac * dac_to_out + srv_to_dac * dac_to_fft * fft_to_out;
   }
 }
