@@ -1,4 +1,4 @@
-use std::{cmp::max, collections::{BinaryHeap, HashSet}, usize};
+use std::{cmp::max, collections::{BinaryHeap, HashSet}, sync::mpsc, thread, usize};
 
 use crate::solution::Solution;
 
@@ -194,7 +194,8 @@ impl Matrix {
       changed = false;
 
       let width = self.contents[0].len();
-      'row: for row in 0..self.contents.len() {
+      'row: for r in 0..self.contents.len() {
+        let row = self.contents.len() - 1 - r;
         let mut total = self.contents[row][width-1];
         let mut target: Option<usize> = None;
         for col in 0..(width-1) {
@@ -215,6 +216,9 @@ impl Matrix {
 
         if target.is_some() {
           input[target.unwrap()] = Some((total / self.contents[row][target.unwrap()]).round() as i64);
+          if input[target.unwrap()].unwrap() < 0 {
+            return false;
+          }
           changed = true;
         }
       }
@@ -254,7 +258,29 @@ impl Day10Solution {
     return 0;
   }
 
-  fn part2_helper(&self, m: &Matrix, free: &Vec<usize>, maxes: &Vec<f64>, state: &mut Vec<i64>, index: usize) -> Option<i64> {
+  fn part2_helper(inp: &str) -> i64 {
+    let mac = Machine::parse(inp);
+      let mut mat = Matrix::construct(&mac);
+      mat.gaussian_elim();
+
+      let free = mat.find_free_variables();
+
+      let mut m_prime = 0;
+      for i in mac.target_joltage {
+        m_prime = max(m_prime, i);
+      }
+
+      let maxes = free.iter().map(|x| mat.find_max_value(*x, m_prime)).collect::<Vec<f64>>();
+
+      let mut state = vec![];
+
+      let sol = Day10Solution::part2_brute_force(&mat, &free, &maxes, &mut state, 0);
+      assert!(sol.is_some());
+
+      return sol.unwrap();
+  }
+
+  fn part2_brute_force(m: &Matrix, free: &Vec<usize>, maxes: &Vec<f64>, state: &mut Vec<i64>, index: usize) -> Option<i64> {
     if state.len() == free.len() {
       let mut input: Vec<Option<i64>> = vec![];
       for _ in 0..(m.contents[0].len() - 1) {
@@ -268,9 +294,6 @@ impl Day10Solution {
       if m.solve(&mut input) {
         let mut sum = 0;
         for i in &input {
-          if i.unwrap() < 0 {
-            return None;
-          }
           sum += i.unwrap();
         }
         return Some(sum);
@@ -286,7 +309,7 @@ impl Day10Solution {
       }
 
       state.push(i);
-      let c = self.part2_helper(m, free, maxes, state, index+1);
+      let c = Day10Solution::part2_brute_force(m, free, maxes, state, index+1);
       if c.is_some() &&  (min.is_none() || c < min) {
         min = c;
       }
@@ -310,27 +333,34 @@ impl Solution for Day10Solution {
 
   fn part2(&self, input: &str) -> i64 {
     let mut sum: i64 = 0;
-    for line in input.split("\n") {
-      let mac = Machine::parse(line);
-      let mut mat = Matrix::construct(&mac);
-      mat.gaussian_elim();
 
-      let free = mat.find_free_variables();
+    let (tx, rx) = mpsc::channel();
+    let mut join_handles = vec![];
+    for i in 0..5 {
+      let _tx = tx.clone();
+      let inputs = input.split("\n")
+        .enumerate()
+        .filter(|x| x.0 % 5 == i)
+        .map(|x| x.1.to_owned()).collect::<Vec<String>>();
 
-      let mut m_prime = 0;
-      for i in mac.target_joltage {
-        m_prime = max(m_prime, i);
-      }
+        join_handles.push(thread::spawn(move || {
+        let mut sum = 0;
+        for inp in inputs {
+          sum += Day10Solution::part2_helper(&inp);
+        }
 
-      let maxes = free.iter().map(|x| mat.find_max_value(*x, m_prime)).collect::<Vec<f64>>();
-
-      let mut state = vec![];
-
-      let sol = self.part2_helper(&mat, &free, &maxes, &mut state, 0);
-      assert!(sol.is_some());
-
-      sum += sol.unwrap();
+        _tx.send(sum).expect("error sending to channel");
+      }));
     }
+
+    for handle in join_handles {
+      handle.join().expect("error joining thread");
+    }
+
+    for val in rx.try_iter() {
+      sum += val;
+    }
+
     return sum; 
   }
 }
