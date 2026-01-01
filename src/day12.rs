@@ -102,7 +102,7 @@ impl Solution for Day12Solution {
     return possible;
   }
 
-  fn part2(&self, input: &str) -> i64 {
+  fn part2(&self, _: &str) -> i64 {
     return 0;
   }
 }

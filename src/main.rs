@@ -83,44 +83,58 @@ fn main() {
     Box::from(Day12Solution{})
   ];
 
-  let solution: &Box<dyn Solution>  = match solutions.get(args.day - 1) {
-    Some(x) => x,
-    None => panic!("solution for day not yet implemented")
-  };
+  for day in 1..13 {
+    if args.day != 0 && args.day != day {
+      continue;
+    }
 
-  let sample_filename = format!("inputs/{}-sample.txt", args.day);
-  let sample_input = fs::read_to_string(&sample_filename).expect(&format!("error opening input file {}", sample_filename));
-
-  let full_filename = format!("inputs/{}-full.txt", args.day);
-  let full_input = fs::read_to_string(&full_filename).expect(&format!("error opening input file {}", full_filename));
-
-  println!("Problem {}", args.day);
-
-  if args.part == 0 || args.part == 1 {
-    println!("  Part 1");
-
+    let mut sample_input = "".to_owned();
     if args.input == 0 || args.input == 1 {
-        let (part1_sample, part1_sample_time) = time (|x| solution.part1(x), &sample_input);
-        println!("    Sample: {part1_sample} ({part1_sample_time} us)", );   
+      let sample_filename = format!("inputs/{}-sample.txt", day);
+      sample_input = fs::read_to_string(&sample_filename).expect(&format!("error opening input file {}", sample_filename));
     }
 
+    let mut full_input = "".to_owned();
     if args.input == 0 || args.input == 2 {
-        let (part1_full, part1_full_time) = time (|x| solution.part1(x), &full_input);
-        println!("    Full:   {} ({} us)", part1_full, part1_full_time);
-    }
-  }
-
-  if args.part == 0 || args.part == 2 {
-    println!("  Part 2");
-
-    if args.input == 0 || args.input == 1 {
-        let (part2_sample, part2_sample_time) = time (|x| solution.part2(x), &sample_input);
-        println!("    Sample: {part2_sample} ({part2_sample_time} us)", );
+      let full_filename = format!("inputs/{}-full.txt", day);
+      full_input = fs::read_to_string(&full_filename).expect(&format!("error opening input file {}", full_filename));
     }
 
-    if args.input == 0 || args.input == 2 {
-        let (part2_full, part2_full_time) = time (|x| solution.part2(x), &full_input);
-        println!("    Full:   {} ({} us)", part2_full, part2_full_time);
+    let solution: &Box<dyn Solution>  = match solutions.get(day - 1) {
+      Some(x) => x,
+      None => panic!("solution for day not yet implemented")
+    };
+
+    println!("Problem {}", day);
+
+    if args.part == 0 || args.part == 1 {
+      println!("  Part 1");
+
+      if args.input == 0 || args.input == 1 {
+          let (part1_sample, part1_sample_time) = time (|x| solution.part1(x), &sample_input);
+          println!("    Sample: {part1_sample} ({part1_sample_time} us)", );   
+      }
+
+      if args.input == 0 || args.input == 2 {
+          let (part1_full, part1_full_time) = time (|x| solution.part1(x), &full_input);
+          println!("    Full:   {} ({} us)", part1_full, part1_full_time);
+      }
     }
+
+    if args.part == 0 || args.part == 2 {
+      println!("  Part 2");
+
+      if args.input == 0 || args.input == 1 {
+          let (part2_sample, part2_sample_time) = time (|x| solution.part2(x), &sample_input);
+          println!("    Sample: {part2_sample} ({part2_sample_time} us)", );
+      }
+
+      if args.input == 0 || args.input == 2 {
+          let (part2_full, part2_full_time) = time (|x| solution.part2(x), &full_input);
+          println!("    Full:   {} ({} us)", part2_full, part2_full_time);
+      }
+    }
+
+    println!();
   }
 }
