@@ -83,6 +83,7 @@ fn main() {
     Box::from(Day12Solution{})
   ];
 
+  let mut total_time = 0;
   for day in 1..13 {
     if args.day != 0 && args.day != day {
       continue;
@@ -112,11 +113,13 @@ fn main() {
 
       if args.input == 0 || args.input == 1 {
           let (part1_sample, part1_sample_time) = time (|x| solution.part1(x), &sample_input);
+          total_time += part1_sample_time;
           println!("    Sample: {part1_sample} ({part1_sample_time} us)", );   
       }
 
       if args.input == 0 || args.input == 2 {
           let (part1_full, part1_full_time) = time (|x| solution.part1(x), &full_input);
+          total_time += part1_full_time;
           println!("    Full:   {} ({} us)", part1_full, part1_full_time);
       }
     }
@@ -126,15 +129,19 @@ fn main() {
 
       if args.input == 0 || args.input == 1 {
           let (part2_sample, part2_sample_time) = time (|x| solution.part2(x), &sample_input);
+          total_time += part2_sample_time;
           println!("    Sample: {part2_sample} ({part2_sample_time} us)", );
       }
 
       if args.input == 0 || args.input == 2 {
           let (part2_full, part2_full_time) = time (|x| solution.part2(x), &full_input);
+          total_time += part2_full_time;
           println!("    Full:   {} ({} us)", part2_full, part2_full_time);
       }
     }
 
     println!();
   }
+
+  println!("Total Time Elapsed: {} us", total_time);
 }
